@@ -1,6 +1,6 @@
 // index.js
 const express = require('express');
-const { sql, poolPromise } = require('./db');
+const { sql, poolPromise } = require('./config/db');
 require('dotenv').config();
 
 const app = express();
