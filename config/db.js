@@ -1,6 +1,8 @@
-const sql = require('mssql');
-require('dotenv').config();
-
+import sql from 'mssql';
+export {sql as sql};
+import dotenv from 'dotenv';
+dotenv.config();
+console.log(process.env.DB_SERVER)
 const config = {
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -12,7 +14,7 @@ const config = {
   }
 };
 
-const poolPromise = new sql.ConnectionPool(config)
+export const poolPromise = new sql.ConnectionPool(config)
   .connect()
   .then(pool => {
     console.log('Connected to Azure SQL');
@@ -22,7 +24,3 @@ const poolPromise = new sql.ConnectionPool(config)
     console.error('Database Connection Failed!', err);
     process.exit(1);
   });
-
-module.exports = {
-  sql, poolPromise
-};

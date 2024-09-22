@@ -1,10 +1,21 @@
 // index.js
-const express = require('express');
-const { sql, poolPromise } = require('./config/db');
-require('dotenv').config();
+import express from 'express';
+import {config} from './config/config.js';
 
 const app = express();
 app.use(express.json());
+const sqs = new config.AWS.SQS();
+const eventBridge = new config.AWS.EventBridge();
+sqs.receiveMessage({
+  QueueUrl: config.AWS_SQS_QUEUE_URL // Replace with your SQS queue URL
+}, (err, data) => {
+  if (err) {
+    console.error(err);
+  } else {
+    console.log(data.Messages);
+    // Process the received messages here
+  }
+});
 
 app.post('/api/data', async (req, res) => {
   const { tableName, data } = req.body;
@@ -20,7 +31,7 @@ app.post('/api/data', async (req, res) => {
     }
 
     // Conexión a la base de datos
-    const pool = await poolPromise;
+    const pool = await config.poolPromise;
 
     // Obtener las columnas y los valores
     const columns = Object.keys(data);
@@ -35,7 +46,7 @@ app.post('/api/data', async (req, res) => {
     // Preparar la solicitud SQL
     const request = pool.request();
     columns.forEach((col, index) => {
-      request.input(`value${index + 1}`, sql.VarChar, values[index]); // Puedes cambiar el tipo de dato según la necesidad
+      request.input(`value${index + 1}`, config.sql.VarChar, values[index]); // Puedes cambiar el tipo de dato según la necesidad
     });
 
     // Ejecutar la consulta
