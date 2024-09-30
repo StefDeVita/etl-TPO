@@ -8,6 +8,24 @@ app.use(express.json());
 const sqs = new config.AWS.SQS();
 const eventBridge = new config.AWS.EventBridge();
 
+async function deleteMessages(messages){
+  for (let index  = 0; index < messages.length; index++) {
+    let message = messages[index];
+    const deleteParams = {
+      QueueUrl: config.AWS_SQS_QUEUE_URL,
+      ReceiptHandle: message.ReceiptHandle
+    }
+    sqs.deleteMessage(deleteParams, (err, data) => {
+      if (err) {
+        console.error("Error falopa", err);
+      }
+      else {
+        console.log("Message " + message + " deleted successfully.")
+      }
+    })
+
+  }
+}
 
 
 async function processMessages(messages){
@@ -70,9 +88,7 @@ async function processMessages(messages){
     } catch (error) {
       console.error('SQL error', error);
     }
-
   }
-  
 }
 
 setInterval(()=>{
@@ -85,6 +101,7 @@ setInterval(()=>{
       console.log(data.Messages);
       // Process the received messages here
       processMessages(data.Messages);
+      deleteMessages(data.Messages);
     }
   });
   console.log("procesa")
