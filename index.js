@@ -128,11 +128,6 @@ async function parsePaymentsModuleData(message) {
      request.input('monto', sql.Decimal, values[2]);
      request.input('id_publicacion', sql.Int, values[3]);
      request.input('id_usuario', sql.Int, values[4]);
-
-     console.log(`
-         INSERT INTO ${tableName} (${columns.join(', ')})
-         VALUES (@id_pago, @fecha, @monto, @id_publicacion, @id_usuario)
-     `)
      // Execute the query
      const result = await request.query(`
          INSERT INTO ${tableName} (${columns.join(', ')})
@@ -145,7 +140,40 @@ async function parsePaymentsModuleData(message) {
   }
 }
 async function parseLegalsModuleData(message) {
+  try {
+    const tableName = "raw_"+message.module_id;
+    const data = message.data;
+    // Validar que el nombre de la tabla no contenga caracteres peligrosos
+    if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+      console.log('Invalid table name format' );
+    }
 
+    // Conexión a la base de datos
+    const pool = await config.poolPromise;
+    // Preparar la solicitud SQL
+    const request = pool.request();
+     // Parameters
+    const columns = Object.keys(data);
+    const values = Object.values(data);
+     request.input('id_contrato', sql.Int, values[0]);
+     request.input('id_publicacion', sql.Int, values[1]);
+     request.input('id_usuario_locador', sql.Int, values[2]);
+     request.input('id_usuario_locatario', sql.Int, values[3]);
+     request.input('fecha_firma', sql.Date, new Date(values[4]));
+     request.input('fecha_inicio', sql.Date, new Date(values[5]));
+     request.input('fecha_fin', sql.Date, new Date(values[6]));
+     request.input('monto_renta', sql.Decimal, values[7]);
+     request.input('estado_contrato', sql.VarChar, values[8]);
+     // Execute the query
+     const result = await request.query(`
+         INSERT INTO ${tableName} (${columns.join(', ')})
+         VALUES (@id_contrato, @id_publicacion, @id_usuario_locador, @id_usuario_locatario, @fecha_firma, @fecha_inicio, @fecha_fin, @monto_renta, @estado_contrato)
+     `);
+
+    console.log('Data inserted successfully', result );
+  } catch (error) {
+    console.error('SQL error', error);
+  }
 }
 async function parseLogisticsModuleData(message) {
 
