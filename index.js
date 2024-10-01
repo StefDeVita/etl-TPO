@@ -2,11 +2,63 @@
 import express from 'express';
 import { config } from './config/config.js';
 import { sql } from './config/db.js';
+import UUID from 'uuid-int';
 
 const app = express();
 app.use(express.json());
 const sqs = new config.AWS.SQS();
-const eventBridge = new config.AWS.EventBridge();
+
+async function parseUserModuleData(message) {
+  try {
+    const tableName = "raw_"+message.module_id;
+    const data = message.data;
+    // Validar que el nombre de la tabla no contenga caracteres peligrosos
+    if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+      console.log('Invalid table name format' );
+    }
+
+    // Conexión a la base de datos
+    const pool = await config.poolPromise;
+    // Preparar la solicitud SQL
+    const request = pool.request();
+     // Parameters
+    let columns = Object.keys(data);
+    const values = Object.values(data);
+     request.input('id_usuario', sql.Int, values[0]);
+     request.input('nombre', sql.VarChar, values[1]);
+     request.input('tipo_usuario', sql.VarChar, values[2]);
+     request.input('fecha_registro', sql.Date, new Date(values[3]));
+
+     console.log(`
+         INSERT INTO ${tableName} (${columns.join(', ')})
+         VALUES (@id_usuario, @nombre, @tipo_usuario, @fecha_registro)
+     `)
+     // Execute the query
+     const result = await request.query(`
+         INSERT INTO ${tableName} (${columns.join(', ')})
+         VALUES (@id_usuario, @nombre, @tipo_usuario, @fecha_registro)
+     `);
+
+    console.log('Data inserted successfully', result );
+  } catch (error) {
+    console.error('SQL error', error);
+  }
+}
+async function parseRealEstateModuleData(message) {
+
+}
+async function parseAccountabilityModuleData(message) {
+
+}
+async function parsePaymentsModuleData(message) {
+
+}
+async function parseLegalsModuleData(message) {
+
+}
+async function parseLogisticsModuleData(message) {
+
+}
 
 async function deleteMessages(messages){
   for (let index  = 0; index < messages.length; index++) {
@@ -20,7 +72,7 @@ async function deleteMessages(messages){
         console.error("Error falopa", err);
       }
       else {
-        console.log("Message " + message + " deleted successfully.")
+        console.log("Message " + message.ReceiptHandle + " deleted successfully.")
       }
     })
 
@@ -29,64 +81,31 @@ async function deleteMessages(messages){
 
 
 async function processMessages(messages){
-  // const { tableName, data } = messages;
-
-  // if (!tableName || !data || typeof data !== 'object' || !Object.keys(data).length) {
-  //   return res.status(400).json({ message: 'Invalid tableName or data provided' });
-  // }
 
   for (let index = 0; index < messages.length; index++) {
     const messageString = messages[index];
-    try {
-      const message = JSON.parse(messageString.Body);
-      const tableName = "raw_"+message.module_id;
-      const data = message.data;
-      // Validar que el nombre de la tabla no contenga caracteres peligrosos
-      if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
-        console.log('Invalid table name format' );
-      }
-  
-      // Conexión a la base de datos
-      const pool = await config.poolPromise;
-      // Preparar la solicitud SQL
-      const request = pool.request();
-       // Parameters
-      const columns = Object.keys(data);
-      const values = Object.values(data);
-       request.input('id_usuario', sql.Int, values[0]);
-       request.input('nombre', sql.VarChar, values[1]);
-       request.input('tipo_usuario', sql.VarChar, values[2]);
-       request.input('fecha_registro', sql.Date, new Date(values[3]));
-
-       // Execute the query
-       const result = await request.query(`
-           INSERT INTO ${tableName} (${columns.join(', ')})
-           VALUES (@id_usuario, @nombre, @tipo_usuario, @fecha_registro)
-       `);
-      //  const result = await request.query(`
-      //     SELECT * FROM ${tableName} 
-      // `);
-      // // Obtener las columnas y los valores
-      // const columns = Object.keys(data);
-      // const values = Object.values(data);
-      // let newValues = [values[0],
-      // ...values.slice(1).map(value => `'${value}'`)]
-      // // Construir la consulta de inserción dinámica
-      // const query = `
-      //   INSERT INTO ${tableName} (${columns.join(', ')}) 
-      //   VALUES (${newValues.join(", ")})
-      // `;
-      // console.log(query)
-      // columns.forEach((col, index) => {
-      //   request.input(`value${index + 1}`, config.sql.VarChar, values[index]); // Puedes cambiar el tipo de dato según la necesidad
-      // });
-  
-      // // Ejecutar la consulta
-      // const result = await request.query(query);
-  
-      console.log('Data inserted successfully', result );
-    } catch (error) {
-      console.error('SQL error', error);
+    const message = JSON.parse(messageString.Body);
+    switch (message.module_id) {
+      case 'usuarios':
+        parseUserModuleData(message)
+        break;
+      case 'publicaciones':
+        parseUserModuleData(message)
+        break;
+      case 'pagos':
+        parseUserModuleData(message)
+        break;
+      case 'mudanzas':
+        parseUserModuleData(message)
+        break;
+      case 'financiamientos':
+        parseUserModuleData(message)
+        break;
+      case 'contratos':
+        parseUserModuleData(message)
+        break;
+      default:
+        break;
     }
   }
 }
