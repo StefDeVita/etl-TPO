@@ -108,7 +108,41 @@ async function parseAccountabilityModuleData(message) {
   }
 }
 async function parsePaymentsModuleData(message) {
+  try {
+    const tableName = "raw_"+message.module_id;
+    const data = message.data;
+    // Validar que el nombre de la tabla no contenga caracteres peligrosos
+    if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+      console.log('Invalid table name format' );
+    }
 
+    // Conexión a la base de datos
+    const pool = await config.poolPromise;
+    // Preparar la solicitud SQL
+    const request = pool.request();
+     // Parameters
+    const columns = Object.keys(data);
+    const values = Object.values(data);
+     request.input('id_pago', sql.Int, values[0]);
+     request.input('fecha', sql.Date, new Date(values[1]));
+     request.input('monto', sql.Decimal, values[2]);
+     request.input('id_publicacion', sql.Int, values[3]);
+     request.input('id_usuario', sql.Int, values[4]);
+
+     console.log(`
+         INSERT INTO ${tableName} (${columns.join(', ')})
+         VALUES (@id_pago, @fecha, @monto, @id_publicacion, @id_usuario)
+     `)
+     // Execute the query
+     const result = await request.query(`
+         INSERT INTO ${tableName} (${columns.join(', ')})
+         VALUES (@id_pago, @fecha, @monto, @id_publicacion, @id_usuario)
+     `);
+
+    console.log('Data inserted successfully', result );
+  } catch (error) {
+    console.error('SQL error', error);
+  }
 }
 async function parseLegalsModuleData(message) {
 
