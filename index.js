@@ -176,7 +176,47 @@ async function parseLegalsModuleData(message) {
   }
 }
 async function parseLogisticsModuleData(message) {
+  try {
+    const tableName = "raw_"+message.module_id;
+    const data = message.data;
+    // Validar que el nombre de la tabla no contenga caracteres peligrosos
+    if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+      console.log('Invalid table name format' );
+    }
 
+    // Conexión a la base de datos
+    const pool = await config.poolPromise;
+    // Preparar la solicitud SQL
+    const request = pool.request();
+     // Parameters
+    const columns = Object.keys(data);
+    const values = Object.values(data);
+     request.input('id_mudanza', sql.Int, values[0]);
+     request.input('fecha_solicitud', sql.Date, new Date(values[1]));
+     request.input('fecha_realizacion', sql.Date, new Date(values[2]));
+     request.input('costo_mudanza', sql.Decimal, values[3]);
+     request.input('barrio_origen', sql.VarChar, values[4]);
+     request.input('barrio_destino', sql.VarChar, values[5]);
+     request.input('latitud_origen', sql.Decimal, values[6]);
+     request.input('longitud_origen', sql.Decimal, values[7]);
+     request.input('latitud_destino', sql.Decimal, values[8]);
+     request.input('longitud_destino', sql.Decimal, values[9]);
+     request.input('id_usuario', sql.Int, values[10]);
+
+     console.log(`
+         INSERT INTO ${tableName} (${columns.join(', ')})
+         VALUES (@id_mudanza, @fecha_solicitud, @fecha_realizacion, @costo_mudanza, @barrio_origen, @barrio_destino, @latitud_origen, @longitud_origen, @latitud_destino, @longitud_destino, @id_usuario)
+     `)
+     // Execute the query
+     const result = await request.query(`
+         INSERT INTO ${tableName} (${columns.join(', ')})
+         VALUES (@id_mudanza, @fecha_solicitud, @fecha_realizacion, @costo_mudanza, @barrio_origen, @barrio_destino, @latitud_origen, @longitud_origen, @latitud_destino, @longitud_destino, @id_usuario)
+     `);
+
+    console.log('Data inserted successfully', result );
+  } catch (error) {
+    console.error('SQL error', error);
+  }
 }
 
 async function deleteMessages(messages){
