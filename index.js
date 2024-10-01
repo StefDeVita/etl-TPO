@@ -63,11 +63,6 @@ async function parseRealEstateModuleData(message) {
      request.input('latitud', sql.Decimal, values[5]);
      request.input('longitud', sql.Decimal, values[6]);
      request.input('id_usuario', sql.Int, values[7]);
-
-     console.log(`
-         INSERT INTO ${tableName} (${columns.join(', ')})
-         VALUES (@id_publicacion, @fecha_publicacion, @precio_publicacion, @tipo_publicacion, @barrio, @latitud, @longitud, @id_usuario)
-     `)
      // Execute the query
      const result = await request.query(`
          INSERT INTO ${tableName} (${columns.join(', ')})
@@ -80,7 +75,37 @@ async function parseRealEstateModuleData(message) {
   }
 }
 async function parseAccountabilityModuleData(message) {
+  try {
+    const tableName = "raw_"+message.module_id;
+    const data = message.data;
+    // Validar que el nombre de la tabla no contenga caracteres peligrosos
+    if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+      console.log('Invalid table name format' );
+    }
 
+    // Conexión a la base de datos
+    const pool = await config.poolPromise;
+    // Preparar la solicitud SQL
+    const request = pool.request();
+     // Parameters
+    const columns = Object.keys(data);
+    const values = Object.values(data);
+     request.input('id_financiamiento', sql.Int, values[0]);
+     request.input('fecha_solicitud', sql.Date, new Date(values[1]));
+     request.input('monto_solicitado', sql.Decimal, values[2]);
+     request.input('monto_aprobado', sql.Decimal, values[3]);
+     request.input('estado_solicitud', sql.VarChar, values[4]);
+     request.input('id_usuario', sql.Int, values[5]);
+     // Execute the query
+     const result = await request.query(`
+         INSERT INTO ${tableName} (${columns.join(', ')})
+         VALUES (@id_financiamiento, @fecha_solicitud, @monto_solicitado, @monto_aprobado, @estado_solicitud, @id_usuario)
+     `);
+
+    console.log('Data inserted successfully', result );
+  } catch (error) {
+    console.error('SQL error', error);
+  }
 }
 async function parsePaymentsModuleData(message) {
 
