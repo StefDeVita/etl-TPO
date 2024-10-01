@@ -90,19 +90,19 @@ async function processMessages(messages){
         parseUserModuleData(message)
         break;
       case 'publicaciones':
-        parseUserModuleData(message)
+        parseRealEstateModuleData(message)
         break;
       case 'pagos':
-        parseUserModuleData(message)
+        parsePaymentsModuleData(message)
         break;
       case 'mudanzas':
-        parseUserModuleData(message)
+        parseLogisticsModuleData(message)
         break;
       case 'financiamientos':
-        parseUserModuleData(message)
+        parseAccountabilityModuleData(message)
         break;
       case 'contratos':
-        parseUserModuleData(message)
+        parseLegalsModuleData(message)
         break;
       default:
         break;
