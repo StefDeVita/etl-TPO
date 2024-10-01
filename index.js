@@ -275,7 +275,8 @@ async function processMessages(messages){
 
 setInterval(()=>{
   sqs.receiveMessage({
-    QueueUrl: config.AWS_SQS_QUEUE_URL // Replace with your SQS queue URL
+    QueueUrl: config.AWS_SQS_QUEUE_URL, // Replace with your SQS queue URL
+    WaitTimeSeconds: 20
   }, (err, data) => {
     if (err) {
       console.error(err);
@@ -287,7 +288,7 @@ setInterval(()=>{
     }
   });
   console.log("procesa")
-}, 10000);
+}, 20000);
 
 
 
