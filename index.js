@@ -2,7 +2,6 @@
 import express from 'express';
 import { config } from './config/config.js';
 import { sql } from './config/db.js';
-import UUID from 'uuid-int';
 
 const app = express();
 app.use(express.json());
@@ -203,10 +202,6 @@ async function parseLogisticsModuleData(message) {
      request.input('longitud_destino', sql.Decimal, values[9]);
      request.input('id_usuario', sql.Int, values[10]);
 
-     console.log(`
-         INSERT INTO ${tableName} (${columns.join(', ')})
-         VALUES (@id_mudanza, @fecha_solicitud, @fecha_realizacion, @costo_mudanza, @barrio_origen, @barrio_destino, @latitud_origen, @longitud_origen, @latitud_destino, @longitud_destino, @id_usuario)
-     `)
      // Execute the query
      const result = await request.query(`
          INSERT INTO ${tableName} (${columns.join(', ')})
@@ -218,7 +213,38 @@ async function parseLogisticsModuleData(message) {
     console.error('SQL error', error);
   }
 }
+async function parseTicketsModuleData(message) {
+  try {
+    const tableName = "raw_"+message.module_id;
+    const data = message.data;
+    // Validar que el nombre de la tabla no contenga caracteres peligrosos
+    if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+      console.log('Invalid table name format' );
+    }
 
+    // Conexión a la base de datos
+    const pool = await config.poolPromise;
+    // Preparar la solicitud SQL
+    const request = pool.request();
+     // Parameters
+    const columns = Object.keys(data);
+    const values = Object.values(data);
+     request.input('id_reclamo', sql.Int, values[0]);
+     request.input('fecha__reclamo', sql.Date, new Date(values[1]));
+     request.input('estado', sql.VarChar, values[2]);
+     request.input('id_usuario', sql.Int, values[3]);
+     request.input('categoria', sql.VarChar, values[4]);
+     // Execute the query
+     const result = await request.query(`
+         INSERT INTO ${tableName} (${columns.join(', ')})
+         VALUES (@id_reclamo, @fecha__reclamo, @estado, @id_usuario, @categoria)
+     `);
+
+    console.log('Data inserted successfully', result );
+  } catch (error) {
+    console.error('SQL error', error);
+  }
+}
 async function deleteMessages(messages){
   for (let index  = 0; index < messages.length; index++) {
     let message = messages[index];
@@ -260,9 +286,12 @@ async function processMessages(messages){
         case 'financiamientos':
           parseAccountabilityModuleData(message)
           break;
-        case 'contratos':
+          case 'contratos':
           parseLegalsModuleData(message)
           break;
+          case 'reclamos':
+            parseTicketsModuleData(message)
+            break;
         default:
           break;
       }
