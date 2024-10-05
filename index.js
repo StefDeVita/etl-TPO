@@ -156,17 +156,19 @@ async function parseLegalsModuleData(message) {
     const values = Object.values(data);
      request.input('id_contrato', sql.Int, values[0]);
      request.input('id_publicacion', sql.Int, values[1]);
-     request.input('id_usuario_locador', sql.Int, values[2]);
-     request.input('id_usuario_locatario', sql.Int, values[3]);
-     request.input('fecha_firma', sql.Date, new Date(values[4]));
-     request.input('fecha_inicio', sql.Date, new Date(values[5]));
-     request.input('fecha_fin', sql.Date, new Date(values[6]));
-     request.input('monto_renta', sql.Decimal, values[7]);
-     request.input('estado_contrato', sql.VarChar, values[8]);
+     request.input('id_usuario_locatario', sql.Int, values[2]);
+     request.input('id_usuario_locador_o_mudanza', sql.Int, values[3]);
+     request.input('id_usuario_escribano', sql.Int, values[4]);
+     request.input('tipo_contrato', sql.VarChar, values[5]);
+     request.input('fecha_firma', sql.Date, new Date(values[6]));
+     request.input('fecha_inicio', sql.Date, new Date(values[7]));
+     request.input('fecha_fin', sql.Date, new Date(values[8]));
+     request.input('monto', sql.Decimal, values[9]);
+     request.input('estado_contrato', sql.VarChar, values[10]);
      // Execute the query
      const result = await request.query(`
          INSERT INTO ${tableName} (${columns.join(', ')})
-         VALUES (@id_contrato, @id_publicacion, @id_usuario_locador, @id_usuario_locatario, @fecha_firma, @fecha_inicio, @fecha_fin, @monto_renta, @estado_contrato)
+         VALUES (@id_contrato, @id_publicacion, @id_usuario_locatario, @id_usuario_locador_o_mudanza, @id_usuario_escribano, @fecha_firma, @fecha_inicio, @fecha_fin, @monto, @estado_contrato)
      `);
 
     console.log('Data inserted successfully', result );
