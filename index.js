@@ -57,15 +57,20 @@ async function parseRealEstateModuleData(message) {
      request.input('id_publicacion', sql.Int, values[0]);
      request.input('fecha_publicacion', sql.Date, new Date(values[1]));
      request.input('precio_publicacion', sql.Decimal, values[2]);
-     request.input('tipo_publicacion', sql.VarChar, values[3]);
-     request.input('barrio', sql.VarChar, values[4]);
-     request.input('latitud', sql.Decimal, values[5]);
-     request.input('longitud', sql.Decimal, values[6]);
-     request.input('id_usuario', sql.Int, values[7]);
+     request.input('direccion', sql.VarChar, values[3]);
+     request.input('habitaciones', sql.Int, values[4]);
+     request.input('barrio', sql.VarChar, values[5]);
+     request.input('latitud', sql.Decimal, values[6]);
+     request.input('longitud', sql.Decimal, values[7]);
+     request.input('estado', sql.VarChar, values[8]);
+     request.input('id_usuario', sql.Int, values[9]);
+     request.input('tipo', sql.VarChar, values[10]);
+     request.input('superficie_total_m2', sql.Int, values[11]);
+     request.input('ganancia_generada', sql.Decimal, values[12]);
      // Execute the query
      const result = await request.query(`
          INSERT INTO ${tableName} (${columns.join(', ')})
-         VALUES (@id_publicacion, @fecha_publicacion, @precio_publicacion, @tipo_publicacion, @barrio, @latitud, @longitud, @id_usuario)
+         VALUES (@id_publicacion, @fecha_publicacion, @precio_publicacion, @direccion, @habitaciones, @barrio, @latitud, @longitud, @estado, @id_usuario, @tipo, @superficie_total_m2, @ganancia_generada)
      `);
 
     console.log('Data inserted successfully', result );
@@ -168,7 +173,7 @@ async function parseLegalsModuleData(message) {
      // Execute the query
      const result = await request.query(`
          INSERT INTO ${tableName} (${columns.join(', ')})
-         VALUES (@id_contrato, @id_publicacion, @id_usuario_locatario, @id_usuario_locador_o_mudanza, @id_usuario_escribano, @fecha_firma, @fecha_inicio, @fecha_fin, @monto, @estado_contrato)
+         VALUES (@id_contrato, @id_publicacion, @id_usuario_locatario, @id_usuario_locador_o_mudanza, @id_usuario_escribano, @tipo_contrato, @fecha_firma, @fecha_inicio, @fecha_fin, @monto, @estado_contrato)
      `);
 
     console.log('Data inserted successfully', result );
