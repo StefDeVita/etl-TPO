@@ -132,10 +132,11 @@ async function parsePaymentsModuleData(message) {
      request.input('monto', sql.Decimal, values[2]);
      request.input('id_publicacion', sql.Int, values[3]);
      request.input('id_usuario', sql.Int, values[4]);
+     request.input('estado', sql.VarChar, values[5]);
      // Execute the query
      const result = await request.query(`
          INSERT INTO ${tableName} (${columns.join(', ')})
-         VALUES (@id_pago, @fecha, @monto, @id_publicacion, @id_usuario)
+         VALUES (@id_pago, @fecha, @monto, @id_publicacion, @id_usuario, @estado)
      `);
 
     console.log('Data inserted successfully', result );
@@ -293,12 +294,12 @@ async function processMessages(messages){
         case 'financiamientos':
           parseAccountabilityModuleData(message)
           break;
-          case 'contratos':
+        case 'contratos':
           parseLegalsModuleData(message)
           break;
-          case 'reclamos':
-            parseTicketsModuleData(message)
-            break;
+        case 'reclamos':
+          parseTicketsModuleData(message)
+          break;
         default:
           break;
       }
@@ -320,6 +321,7 @@ setInterval(()=>{
       console.log(data.Messages);
       // Process the received messages here
       processMessages(data.Messages);
+      //postea
       deleteMessages(data.Messages);
     }
   });
