@@ -262,7 +262,7 @@ async function deleteMessages(messages){
     }
     sqs.deleteMessage(deleteParams, (err, data) => {
       if (err) {
-        console.error("Error falopa", err);
+        console.error("Error", err);
       }
       else {
         console.log("Message " + message.ReceiptHandle + " deleted successfully.")
