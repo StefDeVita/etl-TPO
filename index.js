@@ -6,7 +6,6 @@ import { sql } from './config/db.js';
 const app = express();
 app.use(express.json());
 const sqs = new config.AWS.SQS();
-
 async function parseUserModuleData(message) {
   try {
     const tableName = "raw_"+message.module_id;
@@ -33,7 +32,7 @@ async function parseUserModuleData(message) {
          VALUES (@id_usuario, @nombre, @tipo_usuario, @fecha_registro)
      `);
 
-    console.log('Data inserted successfully', result );
+    console.log('Data inserted successfully');
   } catch (error) {
     console.error('SQL error', error);
   }
@@ -73,7 +72,7 @@ async function parseRealEstateModuleData(message) {
          VALUES (@id_publicacion, @fecha_publicacion, @precio_publicacion, @direccion, @habitaciones, @barrio, @latitud, @longitud, @estado, @id_usuario, @tipo, @superficie_total_m2, @ganancia_generada)
      `);
 
-    console.log('Data inserted successfully', result );
+    console.log('Data inserted successfully' );
   } catch (error) {
     console.error('SQL error', error);
   }
@@ -106,7 +105,7 @@ async function parseAccountabilityModuleData(message) {
          VALUES (@id_financiamiento, @fecha_solicitud, @monto_solicitado, @monto_aprobado, @estado_solicitud, @id_usuario)
      `);
 
-    console.log('Data inserted successfully', result );
+    console.log('Data inserted successfully' );
   } catch (error) {
     console.error('SQL error', error);
   }
@@ -139,7 +138,7 @@ async function parsePaymentsModuleData(message) {
          VALUES (@id_pago, @fecha, @monto, @id_publicacion, @id_usuario, @estado)
      `);
 
-    console.log('Data inserted successfully', result );
+    console.log('Data inserted successfully' );
   } catch (error) {
     console.error('SQL error', error);
   }
@@ -177,7 +176,7 @@ async function parseLegalsModuleData(message) {
          VALUES (@id_contrato, @id_publicacion, @id_usuario_locatario, @id_usuario_locador_o_mudanza, @id_usuario_escribano, @tipo_contrato, @fecha_firma, @fecha_inicio, @fecha_fin, @monto, @estado_contrato)
      `);
 
-    console.log('Data inserted successfully', result );
+    console.log('Data inserted successfully' );
   } catch (error) {
     console.error('SQL error', error);
   }
@@ -216,7 +215,7 @@ async function parseLogisticsModuleData(message) {
          VALUES (@id_mudanza, @fecha_solicitud, @fecha_realizacion, @costo_mudanza, @barrio_origen, @barrio_destino, @latitud_origen, @longitud_origen, @latitud_destino, @longitud_destino, @id_usuario)
      `);
 
-    console.log('Data inserted successfully', result );
+    console.log('Data inserted successfully' );
   } catch (error) {
     console.error('SQL error', error);
   }
@@ -248,7 +247,7 @@ async function parseTicketsModuleData(message) {
          VALUES (@id_reclamo, @fecha__reclamo, @estado, @id_usuario, @categoria)
      `);
 
-    console.log('Data inserted successfully', result );
+    console.log('Data inserted successfully' );
   } catch (error) {
     console.error('SQL error', error);
   }
@@ -265,7 +264,7 @@ async function deleteMessages(messages){
         console.error("Error", err);
       }
       else {
-        console.log("Message " + message.ReceiptHandle + " deleted successfully.")
+        console.log("Message " + "deleted successfully.")
       }
     })
   }
@@ -319,7 +318,9 @@ setInterval(()=>{
     if (err) {
       console.error(err);
     } else {
-      console.log(data.Messages);
+      data.Messages.forEach(message => {
+        console.log(JSON.parse(message.Body));
+      });
       // Process the received messages here
       processMessages(data.Messages);
       deleteMessages(data.Messages);
