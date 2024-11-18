@@ -245,25 +245,32 @@ async function processMessages(pool, messages){
       const message = JSON.parse(messageString.Body);
       switch (message.module_id) {
         case 'usuarios':
-          parseUserModuleData(pool, message).then(() => deleteMessage(messageString))
+          parseUserModuleData(pool, message)
+          .then(() => deleteMessage(messageString))
           break;
         case 'publicaciones':
-          parseRealEstateModuleData(pool, message).then(() => deleteMessage(messageString))
+          parseRealEstateModuleData(pool, message)
+          .then(() => deleteMessage(messageString))
           break;
         case 'pagos':
-          parsePaymentsModuleData(pool, message).then(() => deleteMessage(messageString))
+          parsePaymentsModuleData(pool, message)
+          .then(() => deleteMessage(messageString))
           break;
         case 'mudanzas':
-          parseLogisticsModuleData(pool, message).then(() => deleteMessage(messageString))
+          parseLogisticsModuleData(pool, message)
+          .then(() => deleteMessage(messageString))
           break;
         case 'financiamientos':
-          parseAccountabilityModuleData(pool, message).then(() => deleteMessage(messageString))
+          parseAccountabilityModuleData(pool, message)
+          .then(() => deleteMessage(messageString))
           break;
         case 'contratos':
-          parseLegalsModuleData(pool, message).then(() => deleteMessage(messageString))
+          parseLegalsModuleData(pool, message)
+          .then(() => deleteMessage(messageString))
           break;
         case 'reclamos':
-          parseTicketsModuleData(pool, message).then(() => deleteMessage(messageString))
+          parseTicketsModuleData(pool, message)
+          .then(() => deleteMessage(messageString))
           break;
         default:
           break;
@@ -290,9 +297,13 @@ setInterval(()=>{
       });
       // Conexión a la base de datos
       const pool = await config.poolPromise;
-      console.log(pool.connected)
-      // Process the received messages here
-      processMessages(pool, data.Messages);
+      if(pool.connected){
+        // Process the received messages here
+        processMessages(pool, data.Messages);
+      }
+      else{
+        console.log("Pool connection failed, awaiting 20 seconds to retry");
+      }
     }
   });
 }, 20000);
