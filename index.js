@@ -38,14 +38,13 @@ async function usuarioCreado(pool, data) {
         }
       }
     }
-    const columns = Object.keys(data);
     request.input('id_usuario', sql.Int, data.userId);
     request.input('nombre', sql.VarChar, data.username);
     request.input('tipo_usuario', sql.VarChar, rolUsuario);
     request.input('fecha_registro', sql.Date, new Date(data.register_date));
     // Execute the query
     await request.query(`
-        INSERT INTO ${tableName} (${columns.join(', ')})
+        INSERT INTO ${tableName} (id_usuario, nombre, tipo_usuario, fecha_registro)
         VALUES (@id_usuario, @nombre, @tipo_usuario, @fecha_registro)
     `);
     console.log('Data inserted successfully');
@@ -117,7 +116,6 @@ async function publicacionCreada(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    const columns = Object.keys(data);
     request.input('id_publicacion', sql.Int, data.id);
     request.input('fecha_publicacion', sql.Date, new Date(data.created_at));
     request.input('precio_publicacion', sql.Decimal, data.price);
@@ -133,7 +131,7 @@ async function publicacionCreada(pool, data) {
     request.input('ganancia_generada', sql.Decimal, 0);//TODO a chequear
     // Execute the query
     await request.query(`
-        INSERT INTO ${tableName} (${columns.join(', ')})
+        INSERT INTO ${tableName} (id_publicacion, fecha_publicacion, precio_publicacion, direccion, habitaciones, barrio, latitud, longitud, estado, id_usuario, tipo, superficie_total_m2, ganancia_generada)
         VALUES (@id_publicacion, @fecha_publicacion, @precio_publicacion, @direccion, @habitaciones, @barrio, @latitud, @longitud, @estado, @id_usuario, @tipo, @superficie_total_m2, @ganancia_generada)
     `);
     console.log('Data inserted successfully' );
@@ -147,7 +145,6 @@ async function publicacionActualizada(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
     // Parameters
-   const columns = Object.keys(data);
    request.input('id_publicacion', sql.Int, data.id);
    request.input('fecha_publicacion', sql.Date, new Date(data.created_at));
    request.input('precio_publicacion', sql.Decimal, data.price);
@@ -176,7 +173,6 @@ async function pagoAlquilerCreado(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    const columns = Object.keys(data);
     request.input('id_pago', sql.Int, data.idFactura);
     request.input('fecha', sql.Date, new Date(data.vencimiento));
     request.input('monto', sql.Decimal, data.monto);
@@ -185,7 +181,7 @@ async function pagoAlquilerCreado(pool, data) {
     request.input('estado', sql.VarChar, data.estado);
     // Execute the query
     await request.query(`
-        INSERT INTO ${tableName} (${columns.join(', ')})
+        INSERT INTO ${tableName} (id_pago, fecha, monto, id_publicacion, id_usuario, estado)
         VALUES (@id_pago, @fecha, @monto, @id_publicacion, @id_usuario, @estado)
     `);
     console.log('Data inserted successfully' );
@@ -216,7 +212,6 @@ async function nuevoContratoInmueble(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    const columns = Object.keys(data);
     let resultMonto = await request.query(`
       SELECT precio_publicacion FROM raw_publicaciones WHERE id_publicacion = ${data.publicationId}
     `);
@@ -233,7 +228,7 @@ async function nuevoContratoInmueble(pool, data) {
     request.input('estado_contrato', sql.VarChar, "pendiente");
     // Execute the query
     await request.query(`
-        INSERT INTO ${tableName} (${columns.join(', ')})
+        INSERT INTO ${tableName} (id_contrato, id_publicacion, id_usuario_locatario, id_usuario_locador_o_mudanza, id_usuario_escribano, tipo_contrato, fecha_firma, fecha_inicio, fecha_fin, monto, estado_contrato)
         VALUES (@id_contrato, @id_publicacion, @id_usuario_locatario, @id_usuario_locador_o_mudanza, @id_usuario_escribano, @tipo_contrato, @fecha_firma, @fecha_inicio, @fecha_fin, @monto, @estado_contrato)
     `);
     console.log('Data inserted successfully' );
@@ -247,7 +242,6 @@ async function nuevoContratoMudanza(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    const columns = Object.keys(data);
     request.input('id_contrato', sql.Int, data.contractId);
     request.input('id_publicacion', sql.Int, data.publicationId);//????
     request.input('id_usuario_locatario', sql.Int, data.tenantId);
@@ -261,7 +255,7 @@ async function nuevoContratoMudanza(pool, data) {
     request.input('estado_contrato', sql.VarChar, "pendiente");
     // Execute the query
     await request.query(`
-        INSERT INTO ${tableName} (${columns.join(', ')})
+        INSERT INTO ${tableName} (id_contrato, id_publicacion, id_usuario_locatario, id_usuario_locador_o_mudanza, id_usuario_escribano, tipo_contrato, fecha_firma, fecha_inicio, fecha_fin, monto, estado_contrato)
         VALUES (@id_contrato, @id_publicacion, @id_usuario_locatario, @id_usuario_locador_o_mudanza, @id_usuario_escribano, @tipo_contrato, @fecha_firma, @fecha_inicio, @fecha_fin, @monto, @estado_contrato)
     `);
     console.log('Data inserted successfully' );
@@ -361,7 +355,6 @@ async function mudanzaSolicitada(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    const columns = Object.keys(data);
     request.input('id_mudanza', sql.Int, data.contractId);
     request.input('fecha_solicitud', sql.Date, new Date(data.startDate));
     request.input('fecha_realizacion', sql.Date, new Date(data.endDate));
@@ -375,7 +368,7 @@ async function mudanzaSolicitada(pool, data) {
     request.input('id_usuario', sql.Int, data.tenantId);
     // Execute the query
     await request.query(`
-        INSERT INTO ${tableName} (${columns.join(', ')})
+        INSERT INTO ${tableName} (id_mudanza, fecha_solicitud, fecha_realizacion, costo_mudanza, barrio_origen, barrio_destino, latitud_origen, longitud_origen, latitud_destino, longitud_destino, id_usuario)
         VALUES (@id_mudanza, @fecha_solicitud, @fecha_realizacion, @costo_mudanza, @barrio_origen, @barrio_destino, @latitud_origen, @longitud_origen, @latitud_destino, @longitud_destino, @id_usuario)
     `);
     console.log('Data inserted successfully' );
@@ -459,6 +452,7 @@ async function processMessages(pool, messages){
       if(message.detail.detailType !== undefined || message.detail['detail-type'] !== undefined){
         messageBody = message.detail.detail;
       }
+      console.log(message['detail-type']);
       console.log(messageBody);
       switch (message['detail-type']) {
         case 'ReclamoModificado'://TODO A chequear formato datos no especificados
