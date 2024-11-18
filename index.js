@@ -62,7 +62,7 @@ async function usuarioEliminado(pool, data) {
     request.input('id_usuario', sql.Int, data.userId);
     // Execute the query
     await request.query(`
-        DELETE * FROM ${tableName} WHERE id_usuario = @id_usuario
+        DELETE FROM ${tableName} WHERE id_usuario = @id_usuario
     `);
     console.log('Data inserted successfully');
 }
@@ -296,7 +296,7 @@ async function contratoEliminadoDefinitivamente(pool, data) {
     request.input('id_contrato', sql.Int, data.contractId);
     // Execute the query
     await request.query(`
-      DELETE * FROM ${tableName} WHERE id_contrato = @id_contrato
+      DELETE FROM ${tableName} WHERE id_contrato = @id_contrato
     `);
     console.log('Data inserted successfully' );
 }
