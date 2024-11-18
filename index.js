@@ -103,7 +103,7 @@ async function usuarioModificado(pool, data) {
     request.input('fecha_registro', sql.Date, new Date(data.register_date));
     // Execute the query
     await request.query(`
-        UPDATE ${tableName} SET (nombre = @nombre, tipo_usuario = @tipo_usuario, fecha_registro = @fecha_registro) WHERE id_usuario = @id_usuario
+        UPDATE ${tableName} SET nombre = @nombre, tipo_usuario = @tipo_usuario, fecha_registro = @fecha_registro WHERE id_usuario = @id_usuario
     `);
     console.log('Data modified successfully');
 }
@@ -117,14 +117,14 @@ async function publicacionCreada(pool, data) {
     const request = pool.request();
      // Parameters
     request.input('id_publicacion', sql.Int, data.id);
-    request.input('fecha_publicacion', sql.Date, new Date(data.created_at));
+    request.input('fecha_publicacion', sql.Date, new Date(data.createdAt.slice(0, 3).join("-")));
     request.input('precio_publicacion', sql.Decimal, data.price);
     request.input('direccion', sql.VarChar, data.address);
     request.input('habitaciones', sql.Int, data.rooms);
     request.input('barrio', sql.VarChar, data.district);
     request.input('latitud', sql.Decimal, data.latitude);
     request.input('longitud', sql.Decimal, data.longitude);
-    request.input('estado', sql.VarChar, data.active);
+    request.input('estado', sql.VarChar, (data.active) ? "activada" : "desactivada");
     request.input('id_usuario', sql.Int, data.owner_id);
     request.input('tipo', sql.VarChar, data.type);
     request.input('superficie_total_m2', sql.Int, data.surface_total);
@@ -160,7 +160,7 @@ async function publicacionActualizada(pool, data) {
    request.input('ganancia_generada', sql.Decimal, 0);//TODO a chequear
     // Execute the query
     await request.query(`
-        UPDATE ${tableName} SET (fecha_publicacion = @fecha_publicacion, precio_publicacion = @precio_publicacion, direccion = @direccion, habitaciones = @habitaciones, barrio = @barrio, latitud = @latitud, longitud = @longitud, estado = @estado, id_usuario = @id_usuario, tipo = @tipo, superficie_total_m2 = @superficie_total_m2, ganancia_generada = @ganancia_generada) WHERE id_publicacion = @id_publicacion
+        UPDATE ${tableName} SET fecha_publicacion = @fecha_publicacion, precio_publicacion = @precio_publicacion, direccion = @direccion, habitaciones = @habitaciones, barrio = @barrio, latitud = @latitud, longitud = @longitud, estado = @estado, id_usuario = @id_usuario, tipo = @tipo, superficie_total_m2 = @superficie_total_m2, ganancia_generada = @ganancia_generada WHERE id_publicacion = @id_publicacion
     `);
     console.log('Data inserted successfully' );
 }
@@ -199,12 +199,13 @@ async function pagoRealizado(pool, data) {
     request.input('estado', sql.VarChar, data.status);
     // Execute the query
     await request.query(`
-      UPDATE ${tableName} SET (estado = @estado) WHERE id_pago = @id_pago
+      UPDATE ${tableName} SET estado = @estado WHERE id_pago = @id_pago
     `);
     console.log('Data inserted successfully' );
 }
 async function nuevoContratoInmueble(pool, data) {
     const tableName = "raw_contratos";
+    data = JSON.parse(data);
     // Validar que el nombre de la tabla no contenga caracteres peligrosos
     if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
       console.error('Invalid table name format' );
@@ -212,9 +213,17 @@ async function nuevoContratoInmueble(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
+    console.log(data)
     let resultMonto = await request.query(`
       SELECT precio_publicacion FROM raw_publicaciones WHERE id_publicacion = ${data.publicationId}
     `);
+    resultMonto = resultMonto.recordset[0]
+    if(resultMonto.precio_publicacion){
+      resultMonto = resultMonto.precio_publicacion
+    }
+    else{
+      resultMonto = null;
+    }
     request.input('id_contrato', sql.Int, data.contractId);
     request.input('id_publicacion', sql.Int, data.publicationId);
     request.input('id_usuario_locatario', sql.Int, data.tenantId);
@@ -224,7 +233,7 @@ async function nuevoContratoInmueble(pool, data) {
     request.input('fecha_firma', sql.Date, null);
     request.input('fecha_inicio', sql.Date, new Date(data.startDate));
     request.input('fecha_fin', sql.Date, new Date(data.endDate));
-    request.input('monto', sql.Decimal, resultMonto);
+    request.input('monto', sql.Decimal, resultMonto.output);
     request.input('estado_contrato', sql.VarChar, "pendiente");
     // Execute the query
     await request.query(`
@@ -274,7 +283,7 @@ async function contratoFirmado(pool, data) {
     request.input('estado_contrato', sql.VarChar, "firmado");
     // Execute the query
     await request.query(`
-      UPDATE ${tableName} SET (fecha_firma = @fecha_firma, estado_contrato = @estado_contrato) WHERE id_contrato = @id_contrato
+      UPDATE ${tableName} SET fecha_firma = @fecha_firma, estado_contrato = @estado_contrato WHERE id_contrato = @id_contrato
     `);
     console.log('Data inserted successfully' );
 }
@@ -307,7 +316,7 @@ async function contratoRechazado(pool, data) {
     request.input('estado_contrato', sql.VarChar, "rechazado");
     // Execute the query
     await request.query(`
-      UPDATE ${tableName} SET (estado_contrato = @estado_contrato) WHERE id_contrato = @id_contrato
+      UPDATE ${tableName} SET estado_contrato = @estado_contrato WHERE id_contrato = @id_contrato
     `);
     console.log('Data inserted successfully' );
 }
@@ -324,7 +333,7 @@ async function contratoMudanzaCompletada(pool, data) {
     request.input('estado_contrato', sql.VarChar, "finalizado");
     // Execute the query
     await request.query(`
-      UPDATE ${tableName} SET (estado_contrato = @estado_contrato) WHERE id_contrato = @id_contrato
+      UPDATE ${tableName} SET estado_contrato = @estado_contrato WHERE id_contrato = @id_contrato
     `);
     console.log('Data inserted successfully' );
 }
@@ -342,7 +351,7 @@ async function escribanoAsignado(pool, data) {
   request.input('estado_contrato', sql.VarChar, "asignado");
   // Execute the query
   await request.query(`
-    UPDATE ${tableName} SET (id_usuario_escribano = @id_usuario_escribano, estado_contrato = @estado_contrato) WHERE id_contrato = @id_contrato
+    UPDATE ${tableName} SET id_usuario_escribano = @id_usuario_escribano, estado_contrato = @estado_contrato WHERE id_contrato = @id_contrato
   `);
   console.log('Data inserted successfully' );
 }
@@ -541,7 +550,13 @@ async function processMessages(pool, messages){
           .then(() => deleteMessage(messageString))
           .catch((error) => console.error('Error', error))
           break;
-        case 'AdministradorCreado', 'AdministradorEliminado', 'AdministradorModificado', 'PagoMudanzaCreado', 'PagoMudanzaRealizado', 'AlquilerSolicitado', 'EstadoVisitaModificado':
+        case 'AdministradorCreado':
+        case 'AdministradorEliminado':
+        case 'AdministradorModificado':
+        case 'PagoMudanzaCreado':
+        case 'PagoMudanzaRealizado':
+        case 'AlquilerSolicitado':
+        case 'EstadoVisitaModificado':
           deleteMessage(messageString);
           break;
         default:
@@ -558,8 +573,8 @@ async function processMessages(pool, messages){
 setInterval(()=>{
   sqs.receiveMessage({
     QueueUrl: config.AWS_SQS_QUEUE_URL,
-    WaitTimeSeconds: 20,
-    MaxNumberOfMessages: 10
+    WaitTimeSeconds: 3,
+    MaxNumberOfMessages: 1
   }, async (err, data) => {
     if (err) {
       console.error(err);
@@ -575,7 +590,7 @@ setInterval(()=>{
       }
     }
   });
-}, 20000);
+}, 3000);
 
 app.get('/health', (req, res) => {
   const healthCheck = {
