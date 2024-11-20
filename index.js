@@ -582,6 +582,7 @@ setInterval(()=>{
       // Conexión a la base de datos
       const pool = await config.poolPromise;
       if(pool.connected){
+        console.log("Conectado... 👍")
         // Process the received messages here
         processMessages(pool, data.Messages);
       }
