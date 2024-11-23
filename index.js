@@ -59,6 +59,13 @@ async function usuarioEliminado(pool, data) {
     const request = pool.request();
      // Parameters
     request.input('id_usuario', sql.Int, data.userId);
+    const userExistsResult = await request.query(
+      `SELECT COUNT(*) AS userCount FROM ${tableName} WHERE id_usuario = @id_usuario`
+    );
+
+    if (userExistsResult.recordset[0].userCount === 0) {
+      throw new Error(`El usuario con id_usuario ${data.userId} no existe`);
+    }
     // Execute the query
     await request.query(`
         DELETE FROM ${tableName} WHERE id_usuario = @id_usuario
@@ -97,7 +104,15 @@ async function usuarioModificado(pool, data) {
         }
       }
     }
+    // Check if the user exists
     request.input('id_usuario', sql.Int, data.userId);
+    const userExistsResult = await request.query(
+        `SELECT COUNT(*) AS userCount FROM ${tableName} WHERE id_usuario = @id_usuario`
+    );
+
+    if (userExistsResult.recordset[0].userCount === 0) {
+        throw new Error(`El usuario con id_usuario ${data.userId} no existe`);
+    }
     request.input('nombre', sql.VarChar, data.username);
     request.input('tipo_usuario', sql.VarChar, rolUsuario);
     request.input('fecha_registro', sql.Date, new Date(data.register_date));
@@ -117,7 +132,7 @@ async function publicacionCreada(pool, data) {
     const request = pool.request();
      // Parameters
     request.input('id_publicacion', sql.Int, data.id);
-    request.input('fecha_publicacion', sql.Date, new Date(data.createdAt.slice(0, 3).join("-")));
+    request.input('fecha_publicacion', sql.Date, new Date(data.created_at));
     request.input('precio_publicacion', sql.Decimal, data.price);
     request.input('direccion', sql.VarChar, data.address);
     request.input('habitaciones', sql.Int, data.rooms);
@@ -125,7 +140,7 @@ async function publicacionCreada(pool, data) {
     request.input('latitud', sql.Decimal, data.latitude);
     request.input('longitud', sql.Decimal, data.longitude);
     request.input('estado', sql.VarChar, (data.active) ? "activada" : "desactivada");
-    request.input('id_usuario', sql.Int, data.owner_id);
+    request.input('id_usuario', sql.Int, data.user_id);
     request.input('tipo', sql.VarChar, data.type);
     request.input('superficie_total_m2', sql.Int, data.surface_total);
     request.input('ganancia_generada', sql.Decimal, 0);//TODO a chequear
@@ -146,6 +161,14 @@ async function publicacionActualizada(pool, data) {
     const request = pool.request();
     // Parameters
    request.input('id_publicacion', sql.Int, data.id);
+   // Check if the publication exists
+   const publicationExistsResult = await request.query(
+       `SELECT COUNT(*) AS publicationCount FROM ${tableName} WHERE id_publicacion = @id_publicacion`
+   );
+
+   if (publicationExistsResult.recordset[0].publicationCount === 0) {
+       throw new Error(`La publicacion con id_publicacion ${data.id} no existe`);
+   }
    request.input('fecha_publicacion', sql.Date, new Date(data.created_at));
    request.input('precio_publicacion', sql.Decimal, data.price);
    request.input('direccion', sql.VarChar, data.address);
@@ -196,6 +219,13 @@ async function pagoRealizado(pool, data) {
     const request = pool.request();
      // Parameters
     request.input('id_pago', sql.Int, data.id);
+    const paymentExistsResult = await request.query(
+      `SELECT COUNT(*) AS paymentCount FROM ${tableName} WHERE id_pago = @id_pago`
+    );
+
+    if (paymentExistsResult.recordset[0].paymentCount === 0) {
+      throw new Error(`El pago con id_pago ${data.id} no existe`);
+    }
     request.input('estado', sql.VarChar, data.status);
     // Execute the query
     await request.query(`
@@ -279,6 +309,13 @@ async function contratoFirmado(pool, data) {
     const request = pool.request();
      // Parameters
     request.input('id_contrato', sql.Int, data.contractId);
+    const contractExistsResult = await request.query(
+      `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
+    );
+
+    if (contractExistsResult.recordset[0].contractCount === 0) {
+      throw new Error(`El contrato con id_contrato ${data.contractId} no existe`);
+    }
     request.input('fecha_firma', sql.Date, new Date(data.signDate));
     request.input('estado_contrato', sql.VarChar, "firmado");
     // Execute the query
@@ -297,6 +334,14 @@ async function contratoEliminadoDefinitivamente(pool, data) {
     const request = pool.request();
      // Parameters
     request.input('id_contrato', sql.Int, data.contractId);
+    const contractExistsResult = await request.query(
+      `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
+    );
+
+    if (contractExistsResult.recordset[0].contractCount === 0) {
+      throw new Error(`El contrato con id_contrato ${data.contractId} no existe`);
+    }
+
     // Execute the query
     await request.query(`
       DELETE FROM ${tableName} WHERE id_contrato = @id_contrato
@@ -313,6 +358,13 @@ async function contratoRechazado(pool, data) {
     const request = pool.request();
      // Parameters
     request.input('id_contrato', sql.Int, data.contractId);
+    const contractExistsResult = await request.query(
+      `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
+    );
+
+    if (contractExistsResult.recordset[0].contractCount === 0) {
+      throw new Error(`El contrato con id_contrato ${data.contractId} no existe`);
+    }
     request.input('estado_contrato', sql.VarChar, "rechazado");
     // Execute the query
     await request.query(`
@@ -330,6 +382,13 @@ async function contratoMudanzaCompletada(pool, data) {
     const request = pool.request();
      // Parameters
     request.input('id_contrato', sql.Int, data.contractId);
+    const contractExistsResult = await request.query(
+      `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
+    );
+
+    if (contractExistsResult.recordset[0].contractCount === 0) {
+      throw new Error(`El contrato con id_contrato ${data.contractId} no existe`);
+    }
     request.input('estado_contrato', sql.VarChar, "finalizado");
     // Execute the query
     await request.query(`
@@ -347,6 +406,13 @@ async function escribanoAsignado(pool, data) {
   const request = pool.request();
    // Parameters
   request.input('id_contrato', sql.Int, data.contractId);
+  const contractExistsResult = await request.query(
+    `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
+  );
+
+  if (contractExistsResult.recordset[0].contractCount === 0) {
+    throw new Error(`El contrato con id_contrato ${data.contractId} no existe`);
+  }
   request.input('id_usuario_escribano', sql.Int, data.notaryId);
   request.input('estado_contrato', sql.VarChar, "asignado");
   // Execute the query
@@ -582,7 +648,6 @@ setInterval(()=>{
       // Conexión a la base de datos
       const pool = await config.poolPromise;
       if(pool.connected){
-        console.log("Conectado... 👍")
         // Process the received messages here
         processMessages(pool, data.Messages);
       }
