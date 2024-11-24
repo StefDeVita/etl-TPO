@@ -404,29 +404,39 @@ async function contratoMudanzaCompletada(pool, data) {
     console.log('Data inserted successfully' );
 }
 async function escribanoAsignado(pool, data) {
-  const tableName = "raw_contratos";
-  // Validar que el nombre de la tabla no contenga caracteres peligrosos
-  if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
-    console.error('Invalid table name format' );
+  const tableNameContratos = "raw_contratos";
+  const tableNameUsuarios = "raw_usuarios";
+
+  // Validar que los nombres de las tablas no contengan caracteres peligrosos
+  if (!/^[a-zA-Z0-9_]+$/.test(tableNameContratos) || !/^[a-zA-Z0-9_]+$/.test(tableNameUsuarios)) {
+    console.error('Invalid table name format');
   }
   // Preparar la solicitud SQL
   const request = pool.request();
-   // Parameters
-  request.input('id_contrato', sql.Int, data.contractId);
+  // Verificar si el contrato existe
+  request.input('id_contrato', sql.VarChar, data.contractId);
   const contractExistsResult = await request.query(
-    `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
+    `SELECT COUNT(*) AS contractCount FROM ${tableNameContratos} WHERE id_contrato = @id_contrato`
   );
-
   if (contractExistsResult.recordset[0].contractCount === 0) {
     throw new Error(`El contrato con id_contrato ${data.contractId} no existe`);
   }
-  request.input('id_usuario_escribano', sql.Int, data.notaryId);
+  // Verificar si el escribano existe
+  request.input('id_usuario_escribano', sql.VarChar, data.notaryId);
+  const notaryExistsResult = await request.query(
+    `SELECT COUNT(*) AS userCount FROM ${tableNameUsuarios} WHERE id_usuario = @id_usuario_escribano`
+  );
+  if (notaryExistsResult.recordset[0].userCount === 0) {
+    throw new Error(`El escribano con id_usuario ${data.notaryId} no existe`);
+  }
+  // Actualizar el contrato
   request.input('estado_contrato', sql.VarChar, "asignado");
-  // Execute the query
   await request.query(`
-    UPDATE ${tableName} SET id_usuario_escribano = @id_usuario_escribano, estado_contrato = @estado_contrato WHERE id_contrato = @id_contrato
+    UPDATE ${tableNameContratos} 
+    SET id_usuario_escribano = @id_usuario_escribano, estado_contrato = @estado_contrato 
+    WHERE id_contrato = @id_contrato
   `);
-  console.log('Data inserted successfully' );
+  console.log('Data inserted successfully');
 }
 async function mudanzaSolicitada(pool, data) {
     const tableName = "raw_mudanzas";
