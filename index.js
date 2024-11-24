@@ -523,14 +523,14 @@ function deleteMessage(message){
     ReceiptHandle: message.ReceiptHandle
   }
   console.log("BORRA MENSAJE");
-  // sqs.deleteMessage(deleteParams, (err, data) => {
-  //   if (err) {
-  //     console.error("Error: ", err);
-  //   }
-  //   else {
-  //     console.log("Message " + message.ReceiptHandle + "deleted successfully.")
-  //   }
-  // })
+  sqs.deleteMessage(deleteParams, (err, data) => {
+    if (err) {
+      console.error("Error: ", err);
+    }
+    else {
+      console.log("Message " + message.ReceiptHandle + "deleted successfully.")
+    }
+  })
 }
 async function processMessages(pool, messages){
 
