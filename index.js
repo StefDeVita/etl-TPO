@@ -483,11 +483,11 @@ async function reclamoCreado(pool, data) {
   //const newId = maxIdResult.recordset[0].newId;
 
   // Parameters
-  request.input('id_reclamo', sql.Int, 123);
+  request.input('id_reclamo', sql.VarChar, data.id);
   request.input('fecha_reclamo', sql.Date, new Date (Date.now()));
   request.input('estado', sql.VarChar, 'abierto');
   request.input('categoria', sql.VarChar, data.categoria);
-  request.input('id_usuario', sql.VarChar, data.usernameReclamante); //aca deberia ir el id no el username
+  request.input('id_usuario', sql.VarChar, data.cuitReclamante); //aca deberia ir el id no el username
 
   // Execute the query
   await request.query(`
