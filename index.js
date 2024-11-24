@@ -205,11 +205,11 @@ async function pagoAlquilerCreado(pool, data) {
     request.input('id_pago', sql.Int, data.idFactura);
     request.input('fecha', sql.Date, new Date(data.vencimiento));
     request.input('monto', sql.Decimal, data.monto);
-    request.input('id_usuario', sql.VarChar, data.idPagador);
+    request.input('id_usuario', sql.VarChar, data.idUsuarioPagador);
     request.input('estado', sql.VarChar, data.estado);
     request.input('financiable', sql.VarChar, data.idPagador);
-    request.input('descuento', sql.VarChar, data.idPagador);
-    request.input('concepto', sql.VarChar, data.idPagador);
+    request.input('descuento', sql.VarChar, '0');
+    request.input('concepto', sql.VarChar, data.concepto);
     // Execute the query
     await request.query(`
         INSERT INTO ${tableName} (id_pago, fecha, monto, id_usuario, estado, financiable, descuento, concepto)
@@ -234,6 +234,7 @@ async function pagoRealizado(pool, data) {
     if (paymentExistsResult.recordset[0].paymentCount === 0) {
       throw new Error(`El pago con id_pago ${data.id} no existe`);
     }
+    request.input('descuento', sql.VarChar, String(data.descuentoAnticipado));
     request.input('estado', sql.VarChar, data.status);
     // Execute the query
     await request.query(`
@@ -595,7 +596,7 @@ async function processMessages(pool, messages){
           .then(() => deleteMessage(messageString))
           .catch((error) => console.error('Error', error))
           break;
-        case 'PagoAlquilerCreado':
+        case 'PagoCreado':
           pagoAlquilerCreado(pool, messageBody)
           .then(() => deleteMessage(messageString))
           .catch((error) => console.error('Error', error))
