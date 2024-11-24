@@ -414,7 +414,7 @@ async function escribanoAsignado(pool, data) {
   // Preparar la solicitud SQL
   const request = pool.request();
   // Verificar si el contrato existe
-  request.input('id_contrato', sql.VarChar, data.contractId);
+  request.input('id_contrato', sql.VarChar, String(data.contractId));
   const contractExistsResult = await request.query(
     `SELECT COUNT(*) AS contractCount FROM ${tableNameContratos} WHERE id_contrato = @id_contrato`
   );
@@ -422,7 +422,7 @@ async function escribanoAsignado(pool, data) {
     throw new Error(`El contrato con id_contrato ${data.contractId} no existe`);
   }
   // Verificar si el escribano existe
-  request.input('id_usuario_escribano', sql.VarChar, data.notaryId);
+  request.input('id_usuario_escribano', sql.VarChar, String(data.notaryId));
   const notaryExistsResult = await request.query(
     `SELECT COUNT(*) AS userCount FROM ${tableNameUsuarios} WHERE id_usuario = @id_usuario_escribano`
   );
