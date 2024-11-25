@@ -55,7 +55,7 @@ async function usuarioCreado(pool, data) {
     `);
     console.log('Data inserted successfully');
 }
-async function usuarioEliminado(pool, data) {
+/* async function usuarioEliminado(pool, data) {
     const tableName = "raw_usuarios";
     // Validar que el nombre de la tabla no contenga caracteres peligrosos
     if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
@@ -74,10 +74,24 @@ async function usuarioEliminado(pool, data) {
     }
     // Execute the query
     await request.query(`
-        DELETE FROM ${tableName} WHERE id_usuario = @id_usuario
+
+        UPDATE raw_contratos
+        SET id_usuario_locatario = 'Usuario Eliminado'
+        WHERE id_usuario_locatario = @id_usuario;
+        UPDATE raw_contratos
+        SET id_usuario_locador_o_mudanza = 'Usuario Eliminado'
+        WHERE id_usuario_locador_o_mudanza = @id_usuario;
+        UPDATE raw_contratos
+        SET id_usuario_escribano = 'Usuario Eliminado'
+        WHERE id_usuario_escribano = @id_usuario;
+        DELETE FROM raw_pagos WHERE id_usuario = @id_usuario;
+        DELETE FROM raw_mudanzas WHERE id_usuario = @id_usuario;
+        DELETE FROM raw_reclamos WHERE id_usuario = @id_usuario;
+        DELETE FROM raw_publicaciones WHERE id_usuario = @id_usuario;
+        DELETE FROM ${tableName} WHERE id_usuario = @id_usuario;
     `);
     console.log('Data inserted successfully');
-}
+} */
 async function usuarioModificado(pool, data) {
     const tableName = "raw_usuarios";
     // Validar que el nombre de la tabla no contenga caracteres peligrosos
@@ -137,7 +151,8 @@ async function publicacionCreada(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    request.input('id_publicacion', sql.Int, data.id);
+    data.price = isOverflow(data.price);
+    request.input('id_publicacion', sql.VarChar, String(data.id));
     request.input('fecha_publicacion', sql.Date, new Date(data.created_at));
     request.input('precio_publicacion', sql.Decimal, data.price);
     request.input('direccion', sql.VarChar, data.address);
@@ -166,7 +181,7 @@ async function publicacionActualizada(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
     // Parameters
-   request.input('id_publicacion', sql.Int, data.id);
+   request.input('id_publicacion', sql.VarChar, String(data.id));
    // Check if the publication exists
    const publicationExistsResult = await request.query(
        `SELECT COUNT(*) AS publicationCount FROM ${tableName} WHERE id_publicacion = @id_publicacion`
@@ -175,6 +190,7 @@ async function publicacionActualizada(pool, data) {
    if (publicationExistsResult.recordset[0].publicationCount === 0) {
        throw new Error(`La publicacion con id_publicacion ${data.id} no existe`);
    }
+   data.price = isOverflow(data.price);
    request.input('fecha_publicacion', sql.Date, new Date(data.created_at));
    request.input('precio_publicacion', sql.Decimal, data.price);
    request.input('direccion', sql.VarChar, data.address);
@@ -182,7 +198,7 @@ async function publicacionActualizada(pool, data) {
    request.input('barrio', sql.VarChar, data.district);
    request.input('latitud', sql.Decimal, data.latitude);
    request.input('longitud', sql.Decimal, data.longitude);
-   request.input('estado', sql.VarChar, data.active);
+   request.input('estado', sql.VarChar, data.active ? 'activada': 'inactiva');
    request.input('id_usuario', sql.VarChar, data.owner_id);
    request.input('tipo', sql.VarChar, data.type);
    request.input('superficie_total_m2', sql.Int, data.surface_total);
@@ -201,13 +217,16 @@ async function pagoAlquilerCreado(pool, data) {
     }
     // Preparar la solicitud SQL
     const request = pool.request();
+    const fechaISO = convertirFechaDDMMYYYYaISO(data.vencimiento);
+    
+
      // Parameters
-    request.input('id_pago', sql.Int, data.idFactura);
-    request.input('fecha', sql.Date, new Date(data.vencimiento));
+    request.input('id_pago', sql.VarChar, String(data.idFactura));
+    request.input('fecha', sql.Date, new Date(fechaISO));
     request.input('monto', sql.Decimal, data.monto);
     request.input('id_usuario', sql.VarChar, data.idUsuarioPagador);
     request.input('estado', sql.VarChar, data.estado);
-    request.input('financiable', sql.VarChar, data.idPagador);
+    request.input('financiable', sql.VarChar, data.financiable);
     request.input('descuento', sql.VarChar, '0');
     request.input('concepto', sql.VarChar, data.concepto);
     // Execute the query
@@ -225,8 +244,12 @@ async function pagoRealizado(pool, data) {
     }
     // Preparar la solicitud SQL
     const request = pool.request();
+
+    if (!data.id){
+      throw new Error("No hay id pago papi"); 
+    }
      // Parameters
-    request.input('id_pago', sql.Int, data.id);
+    request.input('id_pago', sql.VarChar, String(data.id));
     const paymentExistsResult = await request.query(
       `SELECT COUNT(*) AS paymentCount FROM ${tableName} WHERE id_pago = @id_pago`
     );
@@ -238,7 +261,7 @@ async function pagoRealizado(pool, data) {
     request.input('estado', sql.VarChar, data.status);
     // Execute the query
     await request.query(`
-      UPDATE ${tableName} SET estado = @estado WHERE id_pago = @id_pago
+      UPDATE ${tableName} SET estado = @estado, descuento = @descuento WHERE id_pago = @id_pago
     `);
     console.log('Data inserted successfully' );
 }
@@ -289,13 +312,13 @@ async function nuevoContratoMudanza(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    request.input('id_contrato', sql.VarChar, data.contractId);
+    request.input('id_contrato', sql.VarChar, String(data.contractId));
     request.input('id_publicacion', sql.VarChar, null);//????
-    request.input('id_usuario_locatario', sql.Int, data.tenantId);
-    request.input('id_usuario_locador_o_mudanza', sql.Int, data.busisnessId);
-    request.input('id_usuario_escribano', sql.Int, null);
+    request.input('id_usuario_locatario', sql.VarChar, String(data.tenantId));
+    request.input('id_usuario_locador_o_mudanza', sql.VarChar, data.busisnessId);
+    request.input('id_usuario_escribano', sql.VarChar, null);
     request.input('tipo_contrato', sql.VarChar, "mudanza");
-    request.input('fecha_firma', sql.Date, new Date(data.signDate));
+    request.input('fecha_firma', sql.Date, null);
     request.input('fecha_inicio', sql.Date, null);
     request.input('fecha_fin', sql.Date, null);
     request.input('monto', sql.Decimal, data.amount);
@@ -315,8 +338,12 @@ async function contratoFirmado(pool, data) {
     }
     // Preparar la solicitud SQL
     const request = pool.request();
+
+    if (Array.isArray(data.signDate)){
+      throw new Error("Error array fecha papi")
+    }
      // Parameters
-    request.input('id_contrato', sql.Int, data.contractId);
+    request.input('id_contrato', sql.VarChar, String(data.contractId));
     const contractExistsResult = await request.query(
       `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
     );
@@ -326,9 +353,12 @@ async function contratoFirmado(pool, data) {
     }
     request.input('fecha_firma', sql.Date, new Date(data.signDate));
     request.input('estado_contrato', sql.VarChar, "firmado");
+    const id_publicacion = await request.query(`SELECT id_publicacion FROM raw_contratos WHERE id_contrato = @id_contrato `); 
+    request.input('id_publicacion', sql.VarChar, String(id_publicacion))
     // Execute the query
     await request.query(`
-      UPDATE ${tableName} SET fecha_firma = @fecha_firma, estado_contrato = @estado_contrato WHERE id_contrato = @id_contrato
+      UPDATE ${tableName} SET fecha_firma = @fecha_firma, estado_contrato = @estado_contrato WHERE id_contrato = @id_contrato; 
+      UPDATE raw_publicaciones SET estado = 'inactiva' WHERE id_publicacion = @id_publicacion; 
     `);
     console.log('Data inserted successfully' );
 }
@@ -341,7 +371,7 @@ async function contratoEliminadoDefinitivamente(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    request.input('id_contrato', sql.Int, data.contractId);
+    request.input('id_contrato', sql.VarChar, String(data.contractId));
     const contractExistsResult = await request.query(
       `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
     );
@@ -365,7 +395,7 @@ async function contratoRechazado(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    request.input('id_contrato', sql.Int, data.contractId);
+    request.input('id_contrato', sql.VarChar, String(data.contractId));
     const contractExistsResult = await request.query(
       `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
     );
@@ -389,7 +419,11 @@ async function contratoMudanzaCompletada(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    request.input('id_contrato', sql.Int, data.contractId);
+
+    if (isJson(data.idMudanza)){
+      throw new Error("Error de mudanza papi");
+    }     
+    request.input('id_contrato', sql.VarChar, String(data.contractId));
     const contractExistsResult = await request.query(
       `SELECT COUNT(*) AS contractCount FROM ${tableName} WHERE id_contrato = @id_contrato`
     );
@@ -447,8 +481,13 @@ async function mudanzaSolicitada(pool, data) {
     }
     // Preparar la solicitud SQL
     const request = pool.request();
+
+    if (isJson(data.idMudanza)){
+      throw new Error("Error de mudanza papi");
+    }
+
      // Parameters
-    request.input('id_mudanza', sql.Int, data.contractId);
+    request.input('id_mudanza', sql.VarChar, String(data.idMudanza));
     request.input('fecha_solicitud', sql.Date, new Date(data.startDate));
     request.input('fecha_realizacion', sql.Date, new Date(data.endDate));
     request.input('costo_mudanza', sql.Decimal, parseInt(data.amount));
@@ -483,7 +522,7 @@ async function reclamoCreado(pool, data) {
   //const newId = maxIdResult.recordset[0].newId;
 
   // Parameters
-  request.input('id_reclamo', sql.VarChar, data.id);
+  request.input('id_reclamo', sql.VarChar, String(data.id));
   request.input('fecha_reclamo', sql.Date, new Date (Date.now()));
   request.input('estado', sql.VarChar, 'abierto');
   request.input('categoria', sql.VarChar, data.categoria);
@@ -507,7 +546,7 @@ async function reclamoModificado(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    request.input('id_reclamo', sql.Int, data.idReclamo);
+    request.input('id_reclamo', sql.VarChar, String(data.idReclamo));
     request.input('estado', sql.VarChar, data.estado);
     request.input('categoria', sql.VarChar, data.categoria);
     // Execute the query
@@ -532,104 +571,296 @@ function deleteMessage(message){
     }
   })
 }
-async function processMessages(pool, messages){
 
+function isPrimaryKeyError(error) {
+  return error && error.message && error.message.includes('Violation of PRIMARY KEY constraint');
+}
+function isJsonError(error){
+  return error && error.message && error.message.includes('Error de mudanza papi');
+}
+
+function isArrayError(error){
+  return error && error.message && error.message.includes('Error array fecha papi');
+}
+
+function isPagoError(error){
+  return error && error.message && error.message.includes('No hay id pago papi');
+}
+function convertirFechaDDMMYYYYaISO(fecha) {
+  const [dia, mes, año] = fecha.split('/');
+  return `${año}-${mes}-${dia}`; // ISO 8601
+
+}
+function isOverflow(price){
+  let newPrice = price; 
+  if (price>8888888) {
+    newPrice = String(price).slice(0,7); 
+    newPrice = parseInt(newPrice, 10);
+  }
+  return newPrice;
+}
+function isJson(item) {
+  let value = typeof item !== "string" ? JSON.stringify(item) : item;
+  try {
+    value = JSON.parse(value);
+  } catch (e) {
+    return false;
+  }
+
+  return typeof value === "object" && value !== null;
+}
+
+async function processMessages(pool, messages) {
   for (let index = 0; index < messages.length; index++) {
     const messageString = messages[index];
-    try{
+    try {
       const message = JSON.parse(messageString.Body);
       let messageBody = message.detail;
-      if(message.detail.detailType !== undefined || message.detail['detail-type'] !== undefined){
+      if (message.detail.detailType !== undefined || message.detail['detail-type'] !== undefined) {
         messageBody = message.detail.detail;
       }
       console.log(message['detail-type']);
       console.log(messageBody);
+
       switch (message['detail-type']) {
-        case 'ReclamoModificado'://TODO A chequear formato datos no especificados
+        case 'ReclamoModificado':
           reclamoModificado(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } else {
+                console.error('Error procesando ReclamoModificado:', error);
+              }
+            });
           break;
-        case 'ReclamoCreado': //TODO a chequear formato por ID
+          
+        case 'ReclamoCreado':
           reclamoCreado(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } else {
+                console.error('Error procesando ReclamoCreado:', error);
+              }
+            });
           break;
-        case 'ContratoMudanzaCompletada'://TODO a chequear por tabla incongruente con alquileres
+
+        
+
+        case 'ContratoMudanzaCompletada':
           contratoMudanzaCompletada(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } 
+              if (isJsonError(error)){
+                console.warn('Error de los de mudanza...');
+                deleteMessage(messageString);
+              }
+              else {
+                console.error('Error procesando ContratoMudanzaCompletada:', error);
+              }
+            });
           break;
-        case 'NuevoContratoMudanza'://TODO a chequear por tabla incongruente con alquileres
+
+        case 'NuevoContratoMudanza':
           nuevoContratoMudanza(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } else {
+                console.error('Error procesando NuevoContratoMudanza:', error);
+              }
+            });
           break;
-        case 'MudanzaSolicitada': //TODO a chequear datos (latitud, longitud y barrio de origen y destino, costo mudanza)
+
+        case 'MudanzaSolicitada':
           mudanzaSolicitada(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } 
+              if (isJsonError(error)){
+                console.warn('Error de los de mudanza...');
+                deleteMessage(messageString);
+              }
+              else {
+                console.error('Error procesando MudanzaSolicitada:', error);
+              }
+            });
           break;
-          //Formatted
+
         case 'UsuarioCreado':
           usuarioCreado(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } else {
+                console.error('Error procesando UsuarioCreado:', error);
+              }
+            });
           break;
-        case 'UsuarioEliminado':
-          usuarioEliminado(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
-          break;
+
+        
+        /*   usuarioEliminado(pool, messageBody)
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } else {
+                console.error('Error procesando UsuarioEliminado:', error);
+              }
+            });
+          break; */
+
+
         case 'UsuarioModificado':
           usuarioModificado(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } else {
+                console.error('Error procesando UsuarioModificado:', error);
+              }
+            });
           break;
+
         case 'PublicacionCreada':
           publicacionCreada(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } else {
+                console.error('Error procesando PublicacionCreada:', error);
+              }
+            });
           break;
+
         case 'PublicacionActualizada':
           publicacionActualizada(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } else {
+                console.error('Error procesando PublicacionActualizada:', error);
+              }
+            });
           break;
+
         case 'PagoCreado':
           pagoAlquilerCreado(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              } else {
+                console.error('Error procesando PagoCreado:', error);
+              }
+            });
           break;
+
         case 'PagoRealizado':
           pagoRealizado(pool, messageBody)
-          .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+            .then(() => deleteMessage(messageString))
+            .catch((error) => {
+              if (isPrimaryKeyError(error)) {
+                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+                deleteMessage(messageString);
+              }
+              if (isPagoError(error)){
+                console.warn('Error de los de idPago...');
+                deleteMessage(messageString);
+              }
+              else {
+                console.error('Error procesando PagoRealizado:', error);
+              }
+            });
           break;
+        
         case 'NuevoContratoInmueble':
           nuevoContratoInmueble(pool, messageBody)
           .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+          .catch((error) => {
+            if (isPrimaryKeyError(error)) {
+              console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+              deleteMessage(messageString);
+            } else {
+              console.error('Error procesando PagoRealizado:', error);
+            }
+          });
           break;
         case 'ContratoFirmado':
           contratoFirmado(pool, messageBody)
           .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+          .catch((error) => {
+            if (isPrimaryKeyError(error)) {
+              console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+              deleteMessage(messageString);
+            }
+            if (isArrayError(error)){
+              console.warn('Error de fecha array...');
+              deleteMessage(messageString);
+            }
+            else {
+              console.error('Error procesando PagoRealizado:', error);
+            }
+          });
           break;
         case 'ContratoEliminadoDefinitivamente':
           contratoEliminadoDefinitivamente(pool, messageBody)
           .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+          .catch((error) => {
+            if (isPrimaryKeyError(error)) {
+              console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+              deleteMessage(messageString);
+            } else {
+              console.error('Error procesando ContratoEliminadoDefinitivamente:', error);
+            }
+          });
           break;
         case 'ContratoRechazado':
           contratoRechazado(pool, messageBody)
           .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+          .catch((error) => {
+            if (isPrimaryKeyError(error)) {
+              console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+              deleteMessage(messageString);
+            } else {
+              console.error('Error procesando PagoRealizado:', error);
+            }
+          });
           break;
         case 'EscribanoAsignado':
           escribanoAsignado(pool, messageBody)
           .then(() => deleteMessage(messageString))
-          .catch((error) => console.error('Error', error))
+          .catch((error) => {
+            if (isPrimaryKeyError(error)) {
+              console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
+              deleteMessage(messageString);
+            } else {
+              console.error('Error procesando PagoRealizado:', error);
+            }
+          });
           break;
         case 'AdministradorCreado':
         case 'AdministradorEliminado':
@@ -637,16 +868,20 @@ async function processMessages(pool, messages){
         case 'PagoMudanzaCreado':
         case 'PagoMudanzaRealizado':
         case 'AlquilerSolicitado':
+        case 'UsuarioEliminado':
         case 'EstadoVisitaModificado':
           deleteMessage(messageString);
           break;
+      
+
+        // Agrega otros casos aquí siguiendo el mismo patrón... */
+
         default:
           console.log("Unknown message type: ", message);
           break;
       }
-    }
-    catch (err) {
-      console.error("Unable to process message: ", err)
+    } catch (err) {
+      console.error("Unable to process message: ", err);
     }
   }
 }
