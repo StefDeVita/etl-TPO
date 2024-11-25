@@ -340,7 +340,7 @@ async function contratoFirmado(pool, data) {
     const request = pool.request();
 
     if (Array.isArray(data.signDate)){
-      throw new Error("Error array fecha ")
+      data.signDate = data.signDate.slice(0, 3).join("-");
     }
      // Parameters
     request.input('id_contrato', sql.VarChar, String(data.contractId));
