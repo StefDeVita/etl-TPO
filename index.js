@@ -671,7 +671,7 @@ setInterval(()=>{
       }
     }
   });
-}, 10000);
+}, 3000);
 
 app.get('/health', (req, res) => {
   const healthCheck = {
