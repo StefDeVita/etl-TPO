@@ -805,7 +805,7 @@ async function processMessages(pool, messages) {
               console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
               deleteMessage(messageString);
             } else {
-              console.error('Error procesando PagoRealizado:', error);
+              console.error('Error procesando NuevoContratoInmueble:', error);
             }
           });
           break;
@@ -822,7 +822,7 @@ async function processMessages(pool, messages) {
               deleteMessage(messageString);
             }
             else {
-              console.error('Error procesando PagoRealizado:', error);
+              console.error('Error procesando ContratoFirmado:', error);
             }
           });
           break;
@@ -846,7 +846,7 @@ async function processMessages(pool, messages) {
               console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
               deleteMessage(messageString);
             } else {
-              console.error('Error procesando PagoRealizado:', error);
+              console.error('Error procesando ContratoRechazado:', error);
             }
           });
           break;
@@ -858,7 +858,7 @@ async function processMessages(pool, messages) {
               console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
               deleteMessage(messageString);
             } else {
-              console.error('Error procesando PagoRealizado:', error);
+              console.error('Error procesando EscribanoAsignado:', error);
             }
           });
           break;
