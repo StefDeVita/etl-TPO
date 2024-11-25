@@ -654,7 +654,7 @@ async function processMessages(pool, messages){
 setInterval(()=>{
   sqs.receiveMessage({
     QueueUrl: config.AWS_SQS_QUEUE_URL,
-    WaitTimeSeconds: 10,
+    WaitTimeSeconds: 3,
     MaxNumberOfMessages: 10
   }, async (err, data) => {
     if (err) {
