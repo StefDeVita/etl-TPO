@@ -226,7 +226,7 @@ async function pagoAlquilerCreado(pool, data) {
     request.input('monto', sql.Decimal, data.monto);
     request.input('id_usuario', sql.VarChar, data.idUsuarioPagador);
     request.input('estado', sql.VarChar, data.estado);
-    request.input('financiable', sql.VarChar, data.financiable);
+    request.input('financiable', sql.VarChar, String(data.financiable));
     request.input('descuento', sql.VarChar, '0');
     request.input('concepto', sql.VarChar, data.concepto);
     // Execute the query
