@@ -246,7 +246,7 @@ async function pagoRealizado(pool, data) {
     const request = pool.request();
 
     if (!data.id){
-      throw new Error("No hay id pago papi"); 
+      throw new Error("No hay id pago "); 
     }
      // Parameters
     request.input('id_pago', sql.VarChar, String(data.id));
@@ -340,7 +340,7 @@ async function contratoFirmado(pool, data) {
     const request = pool.request();
 
     if (Array.isArray(data.signDate)){
-      throw new Error("Error array fecha papi")
+      throw new Error("Error array fecha ")
     }
      // Parameters
     request.input('id_contrato', sql.VarChar, String(data.contractId));
@@ -421,7 +421,7 @@ async function contratoMudanzaCompletada(pool, data) {
      // Parameters
 
     if (isJson(data.idMudanza)){
-      throw new Error("Error de mudanza papi");
+      throw new Error("Error de mudanza ");
     }     
     request.input('id_contrato', sql.VarChar, String(data.contractId));
     const contractExistsResult = await request.query(
@@ -483,7 +483,7 @@ async function mudanzaSolicitada(pool, data) {
     const request = pool.request();
 
     if (isJson(data.idMudanza)){
-      throw new Error("Error de mudanza papi");
+      throw new Error("Error de mudanza ");
     }
 
      // Parameters
@@ -546,9 +546,9 @@ async function reclamoModificado(pool, data) {
     // Preparar la solicitud SQL
     const request = pool.request();
      // Parameters
-    request.input('id_reclamo', sql.VarChar, String(data.idReclamo));
-    request.input('estado', sql.VarChar, data.estado);
-    request.input('categoria', sql.VarChar, data.categoria);
+    request.input('id_reclamo', sql.VarChar, String(data.id));
+    request.input('estado', sql.VarChar, data.status);
+    request.input('categoria', sql.VarChar, data.category);
     // Execute the query
     await request.query(`
         UPDATE ${tableName} SET categoria = @categoria , estado = @estado WHERE id_reclamo = @id_reclamo
@@ -576,15 +576,15 @@ function isPrimaryKeyError(error) {
   return error && error.message && error.message.includes('Violation of PRIMARY KEY constraint');
 }
 function isJsonError(error){
-  return error && error.message && error.message.includes('Error de mudanza papi');
+  return error && error.message && error.message.includes('Error de mudanza ');
 }
 
 function isArrayError(error){
-  return error && error.message && error.message.includes('Error array fecha papi');
+  return error && error.message && error.message.includes('Error array fecha ');
 }
 
 function isPagoError(error){
-  return error && error.message && error.message.includes('No hay id pago papi');
+  return error && error.message && error.message.includes('No hay id pago ');
 }
 function convertirFechaDDMMYYYYaISO(fecha) {
   const [dia, mes, año] = fecha.split('/');
