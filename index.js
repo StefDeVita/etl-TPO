@@ -649,26 +649,6 @@ async function processMessages(pool, messages) {
             });
           break;
 
-        
-
-        case 'ContratoMudanzaCompletada':
-          contratoMudanzaCompletada(pool, messageBody)
-            .then(() => deleteMessage(messageString))
-            .catch((error) => {
-              if (isPrimaryKeyError(error)) {
-                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
-                deleteMessage(messageString);
-              } 
-              if (isJsonError(error)){
-                console.warn('Error de los de mudanza...');
-                deleteMessage(messageString);
-              }
-              else {
-                console.error('Error procesando ContratoMudanzaCompletada:', error);
-              }
-            });
-          break;
-
         case 'NuevoContratoMudanza':
           nuevoContratoMudanza(pool, messageBody)
             .then(() => deleteMessage(messageString))
@@ -682,24 +662,7 @@ async function processMessages(pool, messages) {
             });
           break;
 
-        case 'MudanzaSolicitada':
-          mudanzaSolicitada(pool, messageBody)
-            .then(() => deleteMessage(messageString))
-            .catch((error) => {
-              if (isPrimaryKeyError(error)) {
-                console.warn('Clave primaria duplicada detectada. Eliminando mensaje...');
-                deleteMessage(messageString);
-              } 
-              if (isJsonError(error)){
-                console.warn('Error de los de mudanza...');
-                deleteMessage(messageString);
-              }
-              else {
-                console.error('Error procesando MudanzaSolicitada:', error);
-              }
-            });
-          break;
-
+        
         case 'UsuarioCreado':
           usuarioCreado(pool, messageBody)
             .then(() => deleteMessage(messageString))
@@ -863,7 +826,9 @@ async function processMessages(pool, messages) {
           });
           break;
         case 'AdministradorCreado':
+        case 'ContratoMudanzaCompletada':
         case 'AdministradorEliminado':
+        case 'MudanzaSolicitada':
         case 'AdministradorModificado':
         case 'PagoMudanzaCreado':
         case 'PagoMudanzaRealizado':
