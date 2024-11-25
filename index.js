@@ -199,7 +199,7 @@ async function publicacionActualizada(pool, data) {
    request.input('latitud', sql.Decimal, data.latitude);
    request.input('longitud', sql.Decimal, data.longitude);
    request.input('estado', sql.VarChar, data.active ? 'activada': 'inactiva');
-   request.input('id_usuario', sql.VarChar, data.owner_id);
+   request.input('id_usuario', sql.VarChar, String(data.user_id));
    request.input('tipo', sql.VarChar, data.type);
    request.input('superficie_total_m2', sql.Int, data.surface_total);
    //TODO a chequear
